@@ -49,6 +49,18 @@
         <TabControl Grid.Row="2" Margin="0 10 0 10" Background="#1E1E1E">
             <TabItem Header="System Tools">
                 <StackPanel Orientation="Vertical" Margin="10">
+                    <StackPanel x:Name="stackHostnameChange" Visibility="Collapsed" Margin="10">
+                        <TextBlock Text="New Hostname" Foreground="White"/>
+                        <TextBox x:Name="txtHostname" Width="250" Margin="0,5,0,10"/>
+
+                        <TextBlock Text="Domain Username (DOMAIN\\Username)" Foreground="White"/>
+                        <TextBox x:Name="txtDomainUser" Width="250" Margin="0,5,0,10"/>
+
+                        <TextBlock Text="Password" Foreground="White"/>
+                        <PasswordBox x:Name="txtDomainPass" Width="250" Margin="0,5,0,10"/>
+
+                        <Button Content="Confirm Change Hostname" Width="250" Height="40" Margin="0,10,0,0" Click="ChangeHostname_Domain_Click"/>
+                    </StackPanel>
                     <WrapPanel Margin="0 0 0 10">
                         <Button Width="200" Height="40" Margin="5" Click="ChangeHostname_Click">
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
@@ -56,6 +68,13 @@
                                 <TextBlock Text="Change Hostname" Foreground="White" VerticalAlignment="Center"/>
                             </StackPanel>
                         </Button>
+                        <Button Width="200" Height="40" Margin="5" Click="ChangeHostname_Domain_Click">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                <iconPacks:PackIconMaterial Kind="Domain" Width="20" Height="20" Foreground="White" Margin="0,0,5,0"/>
+                                <TextBlock Text="Change Hostname (Domain)" Foreground="White" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+
                         <Button Width="200" Height="40" Margin="5" Click="ChangeDescription_Click">
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                                 <iconPacks:PackIconMaterial Kind="NoteEdit" Width="20" Height="20" Foreground="White" Margin="0,0,5,0"/>
@@ -92,7 +111,7 @@
                         </Button>
                     </WrapPanel>
                     <WrapPanel Margin="0 0 0 10">
-                        <Button Width="200" Height="40" Margin="5" Click="RestartExplorer_Click">
+                        <Button Width="200" Height="40" Margin="5" Click="btnExplorerRestart_Click">
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                                 <iconPacks:PackIconMaterial Kind="FolderRefresh" Width="20" Height="20" Foreground="White" Margin="0,0,5,0"/>
                                 <TextBlock Text="Restart Explorer" Foreground="White" VerticalAlignment="Center"/>
@@ -166,7 +185,14 @@
                                 <TextBlock Text="Enable Ultimate Performance" Foreground="White" VerticalAlignment="Center"/>
                             </StackPanel>
                         </Button>
+                        <Button Width="200" Height="40" Margin="5" Click="DisableSleepSettings_Click">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                <iconPacks:PackIconMaterial Kind="SleepOff" Width="20" Height="20" Foreground="White" Margin="0,0,5,0"/>
+                                <TextBlock Text="Disable Sleep and Screen Off" Foreground="White" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
                     </WrapPanel>
+                    
                 </StackPanel>
             </TabItem>
         </TabControl>

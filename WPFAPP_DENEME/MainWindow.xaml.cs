@@ -10,6 +10,7 @@ using System.Management;
 using System.Net;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -30,12 +31,15 @@ namespace WPFAPP_DENEME
     /// </summary>
     public partial class MainWindow : MetroWindow
     {
-        private DispatcherTimer uptimeTimer;
+        private DispatcherTimer systemUpdateTimer;
         public MainWindow()
         {
             InitializeComponent();
-            LoadSystemInfo();
-           
+            systemUpdateTimer = new DispatcherTimer();
+            systemUpdateTimer.Interval = TimeSpan.FromSeconds(1); // her 1 saniyede bir
+            systemUpdateTimer.Tick += (s, e) => LoadSystemInfo();
+            systemUpdateTimer.Start();
+
         }
 
         [DllImport("kernel32.dll")]
@@ -57,11 +61,12 @@ namespace WPFAPP_DENEME
 
             txtSystemInfo.Text = $"User: {user}\nComputer Name: {pc}\nOS: {os}\nCPU: {cpu}\nGPU: {gpu}\nRAM: {ram}\nIP Address: {ip}";
 
-            txtSystemStatus.Text = $"CPU Usage: {GetCpuUsage()}%\n" +
-                                   $"Memory Usage: {GetRamUsage()}%\n" +
-                                   $"Disk Usage: C: {GetDiskUsage()} used\n" +
-                                   $"Network: {GetNetworkSpeed()}\n"+
-                                   $"System Uptime: {uptime.Days}d {uptime.Hours}h {uptime.Minutes}m"; ;
+            txtSystemStatus.Text =
+    txtSystemStatus.Text = $"🖥CPU Usage: {GetCpuUsage()}%\n" +
+                           $"📈Memory Usage: {GetRamUsage()}%\n" +
+                           $"💾Disk Usage: {GetDiskUsage()}\n" +
+                           $"🌐Network: {GetNetworkSpeed()} Mbps\n" +
+                           $"⏳Uptime: {uptime.Days}d {uptime.Hours}h {uptime.Minutes}m"; ;
         }
 
         private string GetCpuName()
@@ -145,6 +150,37 @@ namespace WPFAPP_DENEME
                 catch
                 {
                     txtActivityLog.Text += $"[{DateTime.Now:T}] Failed to change hostname.\n";
+                }
+            }
+        }
+
+        private void ChangeHostname_Domain_Click(object sender, RoutedEventArgs e)
+        {
+            InputDialog inputDialog = new InputDialog();
+            if (inputDialog.ShowDialog() == true)
+            {
+                string newName = inputDialog.Hostname;
+                string domainUser = inputDialog.DomainUser;
+                string domainPass = inputDialog.DomainPass;
+
+                try
+                {
+                    string args = $"/c renamecomputer %COMPUTERNAME% /newname:{newName} /userd:{domainUser} /passwordd:{domainPass} /force";
+                    ProcessStartInfo psi = new ProcessStartInfo
+                    {
+                        FileName = "cmd.exe",
+                        Arguments = args,
+                        Verb = "runas",
+                        UseShellExecute = true,
+                        CreateNoWindow = true
+                    };
+                    Process.Start(psi);
+
+                    txtActivityLog.Text = $"✅ Domain ortamında isim '{newName}' olarak değiştirildi. Yeniden başlatman gerekebilir.";
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Hata: " + ex.Message);
                 }
             }
         }
@@ -280,24 +316,57 @@ namespace WPFAPP_DENEME
                 txtActivityLog.Text += $"[{DateTime.Now:T}] Failed to reset network: {ex.Message}\n";
             }
         }
-        private void RestartExplorer_Click(object sender, RoutedEventArgs e)
+        private void btnExplorerRestart_Click(object sender, RoutedEventArgs e)
+        {
+            RestartExplorerViaPowerShell();
+        }
+
+        private void RestartExplorerViaPowerShell()
+        {
+            string psCommand = @"
+        Stop-Process -Name explorer -Force
+        Start-Sleep -Seconds 1
+        Start-Process explorer.exe -WorkingDirectory 'C:\Windows'
+    ";
+
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = "powershell.exe",
+                Arguments = $"-NoProfile -ExecutionPolicy Bypass -Command \"{psCommand}\"",
+                Verb = "runas", // Yönetici olarak çalıştır
+                UseShellExecute = true,
+                WindowStyle = ProcessWindowStyle.Hidden
+            });
+        }
+        private void DisableSleepSettings_Click(object sender, RoutedEventArgs e)
         {
             try
             {
-                Process.Start(new ProcessStartInfo
+                string[] cmds = new[]
                 {
-                    FileName = "cmd.exe",
-                    Arguments = "/c taskkill /f /im explorer.exe && start explorer.exe",
-                    Verb = "runas",
-                    UseShellExecute = true
-                });
-                txtActivityLog.Text += $"[{DateTime.Now:T}] Windows Explorer restarted.\n";
+            "-change -standby-timeout-ac 0",
+            "-change -hibernate-timeout-ac 0",
+            "-change -monitor-timeout-ac 0",
+            "-change -standby-timeout-dc 0",
+            "-change -hibernate-timeout-dc 0",
+            "-change -monitor-timeout-dc 0"
+        };
+
+                foreach (string cmd in cmds)
+                {
+                    Process.Start("powercfg", cmd);
+                }
+
+                txtActivityLog.Text += "\n✅ Uyku ve ekran kapanma ayarları kapatıldı.";
             }
             catch (Exception ex)
             {
-                txtActivityLog.Text += $"[{DateTime.Now:T}] Failed to restart Explorer: {ex.Message}\n";
+                txtActivityLog.Text += "\n❌ Hata: " + ex.Message;
             }
         }
+
+
+
         private void ResetWindowsUpdate_Click(object sender, RoutedEventArgs e)
         {
             try
@@ -446,15 +515,19 @@ Set-ItemProperty -Path 'HKCU:\SOFTWARE\Microsoft\Office\16.0\Outlook\AutoDiscove
         {
             try
             {
+
+                string commands = "/c " +
+                    "powercfg -duplicatescheme e9a42b02-d5df-448d-aa00-03f14749eb61 & " +
+                    "powercfg -setactive e9a42b02-d5df-448d-aa00-03f14749eb61 & ";
+                    
+
                 var psi = new ProcessStartInfo
                 {
                     FileName = "cmd.exe",
-                    Arguments = "/c powercfg -duplicatescheme e9a42b02-d5df-448d-aa00-03f14749eb61",
+                    Arguments = commands,
                     UseShellExecute = true,
                     Verb = "runas"
                 };
-
-                Process.Start(psi);
 
                 txtActivityLog.AppendText($"[{DateTime.Now:HH:mm:ss}] Ultimate Performance plan enabled.\n");
                 txtActivityLog.ScrollToEnd();
@@ -466,20 +539,14 @@ Set-ItemProperty -Path 'HKCU:\SOFTWARE\Microsoft\Office\16.0\Outlook\AutoDiscove
             }
         }
 
-        private void StartUptimeTimer()
-        {
-            uptimeTimer = new DispatcherTimer
-            {
-                Interval = TimeSpan.FromSeconds(1)
-            };
-            uptimeTimer.Tick += UpdateUptime;
-            uptimeTimer.Start();
-        }
+      
 
         private void UpdateUptime(object sender, EventArgs e)
         {
             TimeSpan uptime = TimeSpan.FromMilliseconds(Environment.TickCount);
             txtSystemStatus.Text = $"System Uptime: {uptime.Days}d {uptime.Hours}h {uptime.Minutes}m {uptime.Seconds}s";
         }
+         
+
     }
 }
