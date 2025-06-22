@@ -423,25 +423,30 @@ namespace WPFAPP_DENEME
 
             try
             {
+                // Dosyaları sil
                 foreach (var file in Directory.GetFiles(windowsTemp))
                 {
                     try { File.Delete(file); }
-                    catch { /* erişim hatası varsa atla */ }
+                    catch { /* Hata alınan dosyayı atla */ }
                 }
 
+                // Klasörleri sil
                 foreach (var dir in Directory.GetDirectories(windowsTemp))
                 {
                     try { Directory.Delete(dir, true); }
-                    catch { /* erişim hatası varsa atla */ }
+                    catch { /* Hata alınan klasörü atla */ }
                 }
 
-                txtActivityLog.Text = "Windows TEMP folder cleaned.";
+                txtActivityLog.AppendText($"[{DateTime.Now:HH:mm:ss}] ✅ Windows Temp klasörü temizlendi.\n");
+                txtActivityLog.ScrollToEnd();
             }
             catch (Exception ex)
             {
-                txtActivityLog.Text = "Error cleaning Windows TEMP: " + ex.Message;
+                txtActivityLog.AppendText($"[{DateTime.Now:HH:mm:ss}] ❌ Temp temizlenirken hata: {ex.Message}\n");
+                txtActivityLog.ScrollToEnd();
             }
         }
+
 
         private void RunTrim_Click(object sender, RoutedEventArgs e)
         {
@@ -511,6 +516,29 @@ Set-ItemProperty -Path 'HKCU:\SOFTWARE\Microsoft\Office\16.0\Outlook\AutoDiscove
                 txtActivityLog.Text += $"[{DateTime.Now:T}] Failed to apply fix: {ex.Message}\n";
             }
         }
+        private void RunGpUpdate_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var psi = new ProcessStartInfo
+                {
+                    FileName = "cmd.exe",
+                    Arguments = "/c gpupdate /force",
+                    UseShellExecute = true,
+                    Verb = "runas"
+                };
+
+                Process.Start(psi);
+                txtActivityLog.AppendText($"[{DateTime.Now:HH:mm:ss}] ✅ Group Policy güncellendi.\n");
+                txtActivityLog.ScrollToEnd();
+            }
+            catch (Exception ex)
+            {
+                txtActivityLog.AppendText($"[{DateTime.Now:HH:mm:ss}] ❌ Group Policy güncellenirken hata oluştu: {ex.Message}\n");
+                txtActivityLog.ScrollToEnd();
+            }
+        }
+
         private void EnableUltimatePerformance_Click(object sender, RoutedEventArgs e)
         {
             try

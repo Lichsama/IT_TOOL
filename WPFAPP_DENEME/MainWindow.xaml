@@ -123,6 +123,13 @@
                                 <TextBlock Text="Reset Windows Update" Foreground="White" VerticalAlignment="Center"/>
                             </StackPanel>
                         </Button>
+                        <Button Width="200" Height="40" Margin="5" Click="RunGpUpdate_Click">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                <iconPacks:PackIconMaterial Kind="RefreshAuto" Width="20" Height="20" Foreground="White" Margin="0,0,5,0"/>
+                                <TextBlock Text="Force GPUpdate" Foreground="White" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+
                     </WrapPanel>
                 </StackPanel>
             </TabItem>
